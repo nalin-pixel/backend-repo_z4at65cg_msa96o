@@ -1,48 +1,42 @@
 """
-Database Schemas
+Database Schemas for Lost & Found
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
+Each Pydantic model maps to a MongoDB collection. The collection name is the
+lowercased class name.
 
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Collections:
+- LostItem -> "lostitem"
+- Claim -> "claim"
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
+from datetime import datetime
 
-# Example schemas (replace with your own):
-
-class User(BaseModel):
+class LostItem(BaseModel):
     """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
+    Lost and found item schema
+    Collection name: "lostitem"
     """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+    title: str = Field(..., description="Short name of the item")
+    description: Optional[str] = Field(None, description="Details about the item")
+    category: str = Field(..., description="Category e.g., Electronics, Apparel, ID, Other")
+    location: str = Field(..., description="Where it was lost or found")
+    date: Optional[str] = Field(None, description="Date when item was lost/found (ISO string)")
+    status: str = Field("lost", description="lost | found | claimed")
+    image_url: Optional[str] = Field(None, description="Public URL of the item image")
+    reporter_name: str = Field(..., description="Name of the person reporting")
+    reporter_email: EmailStr = Field(..., description="Contact email of the reporter")
 
-class Product(BaseModel):
+class Claim(BaseModel):
     """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
+    Claim submission for an item
+    Collection name: "claim"
     """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+    item_id: str = Field(..., description="LostItem document id being claimed")
+    claimant_name: str = Field(..., description="Full name of claimant")
+    claimant_email: EmailStr = Field(..., description="Email of claimant")
+    message: Optional[str] = Field(None, description="Details to help verify ownership")
+    status: str = Field("pending", description="pending | approved | rejected")
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
